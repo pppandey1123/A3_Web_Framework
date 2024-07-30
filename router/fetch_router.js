@@ -108,7 +108,7 @@ router.get("/all/pages/:index", (req, res) => {
     return res.status(400).send("Invalid page index.");
   }
   const ITEMS_PER_PAGE = 10;
-  Image.find({}, { imageBuffer: 0 })
+  Image.find({})
     .skip((pageIndex - 1) * ITEMS_PER_PAGE)
     .limit(ITEMS_PER_PAGE)
     .then((page_results) => {
@@ -121,8 +121,8 @@ router.get("/all/pages/:index", (req, res) => {
           const formattedPageItems = page_results.map((image) => ({
             filename: image.filename,
             contentType: image.contentType,
-            imageBuffer: image.imageBufferThumbnail
-              ? image.imageBufferThumbnail.toString("base64")
+            imageBuffer: image.imageBuffer
+              ? image.imageBuffer.toString("base64")
               : "",
           }));
           const response = {
