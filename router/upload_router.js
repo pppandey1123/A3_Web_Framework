@@ -5,6 +5,7 @@ const path = require("path");
 const multer = require("multer");
 const storage = multer.memoryStorage(); //RAM
 const upload = multer({ storage: storage });
+const Image = require("../models/file")
 
 
 // Upload single file
@@ -13,12 +14,6 @@ router
   .get((req, res) => {
     res.sendFile(path.join(__dirname, "../views/upload.html"));
   })
-  .post(upload.single("file"), (req, res) => {
-    if (!req.file) {
-      return res.status(400).send("No file uploaded.");
-    }
-    res.send(`File uploaded successfully: ${req.file.path}`);
-  });
 
 // Upload multiple files
 router
@@ -27,9 +22,6 @@ router
     res.sendFile(path.join(__dirname, "../views", "upload-multiple.html"));
   })
   .post(upload.array("files", 100), (req, res) => {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).send("No files uploaded.");
-    }
     if (!req.files || req.files.length === 0) {
       return res.status(400).send("No files uploaded.");
     }
@@ -42,15 +34,6 @@ router
       });
       return newImage.save();
     });
-  
-    Promise.all(imagePromises)
-      .then(() => {
-        res.status(200).send("Files uploaded successfully.");
-      })
-      .catch((error) => {
-        console.log(error);
-        res.status(500).send("Error saving files to database.");
-      });
 
     Promise.all(imagePromises)
       .then(() => {
@@ -59,10 +42,6 @@ router
       .catch((error) => {
         res.status(500).send("Error saving files to database.");
       });
-
-    res
-      .status(200)
-      .send(`Files uploaded successfully: ${filePaths.join(", ")}`);
   });
 
 module.exports = router;

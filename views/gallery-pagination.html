@@ -1,70 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Gallery Pagination</title>
-    <style>
-        img {
-            width: 200px; /* Adjust size as needed */
-            margin: 10px;
-        }
-        .pagination {
-            margin: 20px 0;
-        }
-        .pagination button {
-            margin: 0 5px;
-            padding: 5px 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fetch Gallery</title>
+  <style>
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .pagination button {
+      margin: 0 5px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Gallery Pagination</h1>
-    <div id="gallery"></div>
-    <div class="pagination" id="pagination"></div>
-    <script>
-        let currentPage = 1;
-        const itemsPerPage = 10;
+  <h1>Fetch Gallery</h1>
+  <button onclick="fetchImages(1)">Fetch Gallery</button>
+  <div id="imageContainer"></div>
+  <div class="pagination" id="paginationControls"></div>
 
-        function loadPage(page) {
-            fetch(`/fetch/all/pages/${page}`)
-                .then(response => response.json())
-                .then(data => {
-                    const galleryDiv = document.getElementById('gallery');
-                    galleryDiv.innerHTML = ''; // Clear previous images
+  <script>
+    let currentPage = 1;
+    let totalPages = 1;
 
-                    const paginationDiv = document.getElementById('pagination');
-                    paginationDiv.innerHTML = ''; // Clear previous pagination
+    function fetchImages(page) {
+      fetch(`/fetch/all/pages/${page}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log(data);
+          const imageContainer = document.getElementById('imageContainer');
+          const paginationControls = document.getElementById('paginationControls');
+          imageContainer.innerHTML = ''; // Clear any existing content
+          if (Array.isArray(data.files) && data.files.length > 0) {
+            data.files.forEach(image => {
+              if (image.imageBuffer) {
+                // Create an img element
+                const imgElement = document.createElement('img');
+                imgElement.src = `data:${image.contentType};base64,${image.imageBuffer}`;
+                imgElement.alt = image.filename;
+                imgElement.style.maxWidth = '200px';
+                imgElement.style.margin = '10px';
 
-                    for (const [fileName, fileContent] of Object.entries(data.files)) {
-                        const img = document.createElement('img');
-                        img.src = `data:image/jpeg;base64,${fileContent}`; // Change MIME type if necessary
-                        img.alt = fileName;
-                        galleryDiv.appendChild(img);
-                    }
+                // Append the img element to the container
+                imageContainer.appendChild(imgElement);
+              }
+            });
 
-                    // Create pagination controls
-                    if (data.page > 1) {
-                        const prevButton = document.createElement('button');
-                        prevButton.innerText = 'Previous';
-                        prevButton.onclick = () => loadPage(data.page - 1);
-                        paginationDiv.appendChild(prevButton);
-                    }
+            totalPages = data.totalPages;
+            updatePaginationControls(page);
+          } else {
+            imageContainer.innerHTML = '<p>No images found.</p>';
+            paginationControls.innerHTML = '';
+          }
+        })
+        .catch(error => console.error("Error fetching files:", error));
+    }
 
-                    paginationDiv.innerText += ` Page ${data.page} of ${data.totalPages} `;
+    function updatePaginationControls(currentPage) {
+      const paginationControls = document.getElementById('paginationControls');
+      paginationControls.innerHTML = ''; // Clear existing controls
 
-                    if (data.page < data.totalPages) {
-                        const nextButton = document.createElement('button');
-                        nextButton.innerText = 'Next';
-                        nextButton.onclick = () => loadPage(data.page + 1);
-                        paginationDiv.appendChild(nextButton);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching page:', error);
-                });
-        }
+      if (currentPage > 1) {
+        const prevButton = document.createElement('button');
+        prevButton.textContent = 'Previous';
+        prevButton.onclick = () => fetchImages(currentPage - 1);
+        paginationControls.appendChild(prevButton);
+      }
 
-        // Load the initial page
-        loadPage(currentPage);
-    </script>
+      const pageInfo = document.createElement('span');
+      pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+      paginationControls.appendChild(pageInfo);
+
+      if (currentPage < totalPages) {
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Next';
+        nextButton.onclick = () => fetchImages(currentPage + 1);
+        paginationControls.appendChild(nextButton);
+      }
+    }
+
+    // Initial fetch
+    fetchImages(currentPage);
+  </script>
 </body>
 </html>
